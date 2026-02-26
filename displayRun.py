@@ -108,13 +108,10 @@ def render_content(draw_blk: TImageDraw, image_blk: TImage,  draw_red: TImageDra
     from devtools import debug
 
     last_event_day = datetime.now().date()
-    first_day = True
     for event in event_list:
         # Draw new day header — right of the line
         if last_event_day != event.start.date():
-            if not first_day:
-                current_height += get_font_height(FONT_POPPINS_P) * 0.6
-            first_day = False
+            current_height += get_font_height(FONT_POPPINS_P) * 0.6
             last_event_day = event.start.date()
             day_string = "{} {}".format(last_event_day.strftime("%a"), ordinal(last_event_day.day))
             draw_blk.text((MARGIN_X + MARGIN_GAP_RIGHT, current_height),
