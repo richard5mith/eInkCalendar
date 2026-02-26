@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 import requests
 import vobject
 from dateutil import tz
+from dateutil.relativedelta import *
 from icalevents.icalevents import events
 from icalevents.icalparser import Event
 from lxml import etree
@@ -23,27 +24,30 @@ def sort_by_date(e: Event):
 
 def get_events(max_number: int) -> List[Event]:
     logger.info("Retrieving calendar infos")
-    utc_timezone = tz.tzutc()
+    london = tz.gettz('Europe/London')
     current_timezone = tz.tzlocal()
-
+    now = datetime.now(tz=current_timezone)
+    in_two_weeks = now+relativedelta(days=+14)
+    from devtools import debug
     try:
-        event_list = events(WEBDAV_CALENDAR_URL, fix_apple=WEBDAV_IS_APPLE)
+        event_list = events(WEBDAV_CALENDAR_URL, fix_apple=WEBDAV_IS_APPLE, end=in_two_weeks)
         event_list.sort(key=sort_by_date)
 
         start_count = 0
         for event in event_list:
-            event.start.replace(tzinfo=utc_timezone)
+            # If the event has no timezone info, assume Europe/London
+            if event.start.tzinfo is None:
+                event.start = event.start.replace(tzinfo=london)
             event.start = event.start.astimezone(current_timezone)
-
             # remove events from previous day (problem based on time-zones)
             day_number = time.localtime().tm_mday
             event_date = event.start.date()
             if (day_number == 1 and event_date.month < time.localtime().tm_mon):
                 start_count += 1
                 max_number += 1
-            elif (event_date.day < day_number):
-                start_count += 1
-                max_number += 1
+            #elif (event_date.day < day_number):
+                #start_count += 1
+                #max_number += 1
 
         logger.info("Got {} calendar-entries (capped to {})".format(
             len(event_list), max_number-start_count))

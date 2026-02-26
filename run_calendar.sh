@@ -1,3 +1,4 @@
 #!/bin/bash
 cd $(dirname $0)
-python3 ./run_calendar.py
+pkill -f run_calendar.py || true
+python3 ./run_calendar.py > /dev/null 2>&1 &
